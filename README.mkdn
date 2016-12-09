@@ -294,7 +294,7 @@ Available options are:
 
 ## inlinify\_code
 
-    my $code = inlinify_method( \%global_capture, $code,  %options );
+    my $code = inlinify_code( \%global_capture, $code,  %options );
 
 Generate code which inlines `$code` handling captures specified in `%options`.
 
