@@ -1,0 +1,4 @@
+\.build
+.gz$
+^Sub-QuoteX-Utils
+~$

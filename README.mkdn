@@ -1,0 +1,357 @@
+# NAME
+
+Sub::QuoteX::Utils - Sugar for Sub::Quote
+
+# VERSION
+
+version 0.01
+
+# SYNOPSIS
+
+    use Sub::Quote;
+    use Sub::QuoteX::Utils qw[ quote_subs ];
+    
+    my $sub;
+    
+    # class with method
+    {
+        package Yipee;
+        use Moo;
+        sub halloo { shift; print "Yipee, @_\n" }
+    }
+    
+    # and the object
+    my $object = Yipee->new;
+    
+    # quoted sub
+    my $foo = quote_sub(
+      q[ print "$foo: @_\n"],
+      { '$foo' => \"Foo" }
+    );
+    
+    
+    # bare sub
+    sub bar { print "Bar: @_\n" }
+    
+    
+    # create single subroutine. each invoked piece of code will have a
+    # localized view of @_
+    $sub = quote_subs(
+        \&bar,                             # bare sub
+        $foo,                              # quoted sub
+        [ q[ print "$goo: @_\n"],          # code in string with capture
+          capture => { '$goo' => \"Goo" },
+        ],
+        [ $object, 'halloo' ],             # method call
+    );
+    
+    
+    # and run it
+    $sub->( "Common" );
+    
+    # Bar: Common
+    # Goo: Common
+    # Foo: Common
+    # Yipee: Common
+    
+    
+    # now, give each a personalized @_
+    $sub            = quote_subs(
+        [ \&bar,                           # bare sub
+          args      => [qw( Bar )]
+        ],
+        [ $foo,                            # quoted sub
+          args      => [qw( Foo )]
+        ],
+        [ q[ print "$goo, @_\n"],          # code in string with capture
+          capture => { '$goo' => \"Goo" },
+          args    => [qw( Goo )],
+        ],
+        [ $object, 'halloo',               # method call
+            args    => [qw( Yipee )]
+        ],
+    );
+    
+    $sub->( "Common" );
+    
+    # Bar: Bar
+    # Foo: Foo
+    # Goo: Goo
+    # Yipee: Yipee
+    
+    # now, explicitly empty @_
+    $sub = quote_subs(
+        [ \&bar,                           # bare sub
+          args => undef
+        ],
+        [ $foo,                            # quoted sub
+          args => undef
+        ],
+        [ q[ print "$goo, @_\n"],          # code in string with capture
+          capture => { '$goo' => \"Goo" },
+          args    => undef,
+        ],
+        [ $object, 'halloo',               #method call
+          args => undef
+        ],
+    );
+    
+    $sub->( "Common" );
+    
+    # Bar:
+    # Foo:
+    # Goo:
+    # Yipee:
+
+# DESCRIPTION
+
+**Sub::QuoteX::Utils** provides a simplified interface to the process of
+combining [Sub::Quote](https://metacpan.org/pod/Sub::Quote) compatible code references with new code.
+
+[Sub::Quote](https://metacpan.org/pod/Sub::Quote) provides a number of routines to make code more
+performant by inlining separate chunks of code into a single compiled subroutine.
+
+When a chunk of code is compiled into a subroutine by [`Sub::Quote::quote_sub()`](https://metacpan.org/pod/Sub::Quote#quote_sub), **Sub::Quote**
+keeps track of the code and any captured variables used to construct
+that subroutine, so that new code can be added to the original code
+and the results compiled into a new subroutine.
+
+**Sub::QuoteX::Utils** makes that latter process a little easier.
+
+## Captures
+
+**Sub::Quote** keeps track of captured variables in hashes, _copying_
+the values.  For example,
+
+    use Sub::Quote;
+    
+    my $sound = 'woof';
+    
+    my $emit = quote_sub( q{ print "$sound\n" }, { '$sound' => \$sound } );
+    
+    &$emit; # woof
+    
+    $sound = 'meow';
+    
+    &$emit; # woof
+
+When combining chunks of inlined code, each chunk has it's own set of
+captured values which must be kept distinct.
+
+["quote\_subs"](#quote_subs) manages this for the caller, but when using the low
+level routines ( ["inlinify\_coderef"](#inlinify_coderef), ["inlinify\_method"](#inlinify_method),
+["inlinify\_code"](#inlinify_code) ) the caller must manage the captures.  These
+routines store per-chunk captures in their `\%global_capture` argument.
+The calling routine optionally may provide a mnemonic (but unique!)
+string which will be part of the key for the chunk.
+
+The `%global_capture` hash should be passed to
+["quote\_sub" in Sub::Quote](https://metacpan.org/pod/Sub::Quote#quote_sub), when the final subroutine is compiled.  For
+example,
+
+    my %global_capture;
+    my $code = inlinify_coderef( \%global_capture, $coderef, %options );
+
+    # add more code to $code [...]
+
+    $new_coderef = Sub::Quote::quote_sub( $code, \%global_capture );
+
+# FUNCTIONS
+
+## quote\_subs
+
+    my $coderef = quote_subs( $spec, ?$spec, ... , ?\%options );
+
+Creates a compiled subroutine from chunks of inlined code defined by
+the specifications, returning an inlineable code reference.
+
+By default each chunk will localize `@_` to avoid changing `@_` for
+the other chunks. This can be changed on a per-chunk basis by
+specifying the `local` option in each specification.
+
+A specification may have the following form:
+
+- `$coderef`
+
+    If `$coderef` is inlineable (i.e, generated by
+    ["quote\_sub" in Sub::Quote](https://metacpan.org/pod/Sub::Quote#quote_sub)) it will be directly inlined, else code to
+    invoke it will be generated.
+
+- `[ $coderef, %option ]`
+
+    This is another way of specifying a code reference, allowing
+    more manipulation; see ["inlinify\_coderef"](#inlinify_coderef) for available options.
+
+- `[ $object, $method, %option ]`
+
+    Inline a method call. A weakened reference to `$object` is kept to
+    avoid leaks. Method lookup is performed at runtime.  See
+    ["inlinify\_method"](#inlinify_method) for available options.
+
+- `[ $string, %option ]`
+
+    Inline a chunk of code in a string. See ["inlinify\_code"](#inlinify_code) for
+    available options.
+
+Options which may be passed as the last parameter include all of the
+options accepted by [`Sub::Quote::quote_sub`](https://metacpan.org/pod/Sub::Quote#quote_sub), as well as:
+
+- `name`
+
+    An optional name for the compiled subroutine.
+
+## inlinify\_coderef
+
+    my $code = inlinify_coderef( \%global_capture, $coderef, %options );
+
+Generate code which will execute `$coderef`. If `$coderef` is
+inlineable, it is inlined, else code which will invoke it is generated.
+
+See ["Captures"](#captures) for more information on `%global_capture`.
+
+Available options are:
+
+- `name` => _string_
+
+    An optional string used as part of the hash key for this chunk's captures.
+
+- `local` => _boolean_
+
+    If true (the default) changes to `@_` will be local, e.g.
+
+        local @_ = ...;
+
+    rather than
+
+        @_ = ...;
+
+- `args` => _arrayref_ | _hashref_ | _string_ | `undef`
+
+    This specified the values of `@_`.
+
+    - if not specified, the value of `@_` is unchanged.
+    - if the value is `undef`, `@_` will be empty.
+    - if the value is a reference to an array or hash, `@_` will be set
+    equal to its contents. Note that the reference is _cached_, so
+        - changes to its contents will be reflected in calls to the code.
+        - there is the danger of memory leaks, as any non-weakened references in
+        the structure will be destroyed only when both `%global_capture` and
+        any subroutines based on this are destroyed.
+    - if a string, this is inlined directly, e.g.
+
+            args => q[( 'FRANK' )]
+
+        results in
+
+            @_ = ( 'FRANK' )
+
+## inlinify\_method
+
+    my $code = inlinify_method( \%global_capture, $object, $method,  %options );
+
+Generate code which will invoke the method named by `$method` on
+`$object`.  While method resolution is performed at runtime,
+`inlinify_method` checks that `$method` is available for `$object`
+and will `croak` if not.
+
+See ["Captures"](#captures) for more information on `%global_capture`.
+
+Available options are:
+
+- `name` => _string_
+
+    An optional string used as part of the hash key for this chunk's captures.
+
+- `local` => _boolean_
+
+    If true (the default) changes to `@_` will be local, e.g.
+
+        local @_ = ...;
+
+    rather than
+
+        @_ = ...;
+
+- `args` => _arrayref_ | _hashref_ | _string_ | `undef`
+
+    This specified the values of `@_`.
+
+    - if not specified, the value of `@_` is unchanged.
+    - if the value is `undef`, `@_` will be empty.
+    - if the value is a reference to an array or hash, `@_` will be set
+    equal to its contents. Note that the reference is _cached_, so
+        - changes to its contents will be reflected in calls to the code.
+        - there is the danger of memory leaks, as any non-weakened references in
+        the structure will be destroyed only when both `%global_capture` and
+        any subroutines based on this are destroyed.
+    - if a string, this is inlined directly, e.g.
+
+            args => q[( 'FRANK' )]
+
+        results in
+
+            @_ = ( 'FRANK' )
+
+## inlinify\_code
+
+    my $code = inlinify_method( \%global_capture, $code,  %options );
+
+Generate code which inlines `$code` handling captures specified in `%options`.
+
+Available options are:
+
+- `capture` => _hashref_
+
+    A hash containing captured variable names and values.  See the
+    documentation of the `\%captures` argument to ["quote\_sub" in Sub::Quote](https://metacpan.org/pod/Sub::Quote#quote_sub)
+    for more information.
+
+- `name` => _string_
+
+    An optional string used as part of the hash key for this chunk's captures.
+
+- `local` => _boolean_
+
+    If true (the default) changes to `@_` will be local, e.g.
+
+        local @_ = ...;
+
+    rather than
+
+        @_ = ...;
+
+- `args` => _arrayref_ | _hashref_ | _string_ | `undef`
+
+    This specified the values of `@_`.
+
+    - if not specified, the value of `@_` is unchanged.
+    - if the value is `undef`, `@_` will be empty.
+    - if the value is a reference to an array or hash, `@_` will be set
+    equal to its contents. Note that the reference is _cached_, so
+        - changes to its contents will be reflected in calls to the code.
+        - there is the danger of memory leaks, as any non-weakened references in
+        the structure will be destroyed only when both `%global_capture` and
+        any subroutines based on this are destroyed.
+    - if a string, this is inlined directly, e.g.
+
+            args => q[( 'FRANK' )]
+
+        results in
+
+            @_ = ( 'FRANK' )
+
+# SEE ALSO
+
+[Sub::Quote](https://metacpan.org/pod/Sub::Quote)
+
+# AUTHOR
+
+Diab Jerius <djerius@cpan.org>
+
+# COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2016 by Smithsonian Astrophysical Observatory.
+
+This is free software, licensed under:
+
+    The GNU General Public License, Version 3, June 2007
