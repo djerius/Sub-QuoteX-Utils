@@ -367,7 +367,7 @@ sub inlinify_method {
 
 =func inlinify_code
 
-  my $code = inlinify_method( \%global_capture, $code,  %options );
+  my $code = inlinify_code( \%global_capture, $code,  %options );
 
 Generate code which inlines C<$code> handling captures specified in C<%options>.
 
