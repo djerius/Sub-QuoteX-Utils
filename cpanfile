@@ -43,6 +43,7 @@ on 'develop' => sub {
   requires "Dist::Zilla::Plugin::Prereqs::AuthorDeps" => "0";
   requires "Dist::Zilla::Plugin::Readme::Brief" => "0";
   requires "Dist::Zilla::Plugin::ReadmeAnyFromPod" => "0";
+  requires "Dist::Zilla::Plugin::Regenerate" => "0";
   requires "Dist::Zilla::Plugin::RewriteVersion" => "0";
   requires "Dist::Zilla::Plugin::RunExtraTests" => "0";
   requires "Dist::Zilla::Plugin::Test::Compile" => "0";
