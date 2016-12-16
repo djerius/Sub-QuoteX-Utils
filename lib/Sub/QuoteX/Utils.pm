@@ -28,14 +28,18 @@ our @EXPORT_OK = qw(
 
   my $coderef = quote_subs( $spec, ?$spec, ... , ?\%options );
 
-Creates a compiled subroutine from chunks of inlined code defined by
-the specifications, returning an inlineable code reference.
+Creates a compiled subroutine from syntactically complete chunks of
+code or from snippets of code.
+
+Chunks may be extracted from code previously inlined by L<Sub::Quote>,
+specified as strings containing code, or generated to accomodate
+invoking object methods or calling non-inlineable code.
 
 By default each chunk will localize C<@_> to avoid changing C<@_> for
 the other chunks. This can be changed on a per-chunk basis by
 specifying the C<local> option in each specification.
 
-A specification may have the following form:
+Specifications may take one of the following forms:
 
 =over
 
@@ -61,6 +65,17 @@ L</inlinify_method> for available options.
 Inline a chunk of code in a string. See L</inlinify_code> for
 available options.
 
+=item C<$scalarref>
+
+Inline a snippet of code stored in the referenced scalar.  Snippets
+need not be syntactically complete, and thus may be used to enclose
+chunks in blocks. For example, to catch exceptions thrown by a chunk:
+
+   $coderef = quote_subs( \'eval {', \&chunk_as_func, \'};' );
+
+Specify any required captured values in the C<capture> option to
+C<quote_subs>.
+
 =back
 
 Options which may be passed as the last parameter include all of the
@@ -69,9 +84,17 @@ options accepted by L<< C<Sub::Quote::quote_sub>|Sub::Quote/quote_sub
 
 =over
 
-=item C<name>
+=item C<name> => I<string>
 
 An optional name for the compiled subroutine.
+
+=item C<capture> => I<hashref>
+
+A hash containing captured variable names and values.  See the
+documentation of the C<\%captures> argument to L<Sub::Quote/quote_sub>
+for more information.
+
+
 
 =back
 
@@ -81,9 +104,9 @@ An optional name for the compiled subroutine.
 # quote_subs( [], [], {} );
 sub quote_subs {
 
-    my %global_capture;
-
     my %option = 'HASH' eq ref $_[-1] ? %{ pop @_ } : ();
+
+    my %global_capture = %{ delete $option{capture} || {} };
 
     my @code;
     for my $thing ( @_ ) {
@@ -92,23 +115,33 @@ sub quote_subs {
 
         if ( 'CODE' eq ref $arr->[0] ) {
 
-            push @code, inlinify_coderef( \%global_capture, @$arr );
+            push @code, inlinify_coderef( \%global_capture, @$arr ), q[;] ;
         }
 
         elsif ( blessed $arr->[0] ) {
 
-            push @code, inlinify_method( \%global_capture, @$arr );
+            push @code, inlinify_method( \%global_capture, @$arr ), q[;] ;
         }
 
         elsif ( !ref $arr->[0] ) {
 
-            push @code, inlinify_code( \%global_capture, @$arr );
+            push @code, inlinify_code( \%global_capture, @$arr ), q[;] ;
         }
+
+	elsif ( 'SCALAR' eq ref $arr->[0] ) {
+
+	    push @code, ${ $arr->[0] };
+
+	}
+	else {
+
+	    croak( "don't understand argument in $_[@{[ scalar @code ]}]\n" );
+	}
     }
 
     quote_sub(
         ( delete $option{name} || () ),
-        join( ";\n", @code ),
+        join( "\n", @code ),
         \%global_capture, \%option
     );
 
@@ -483,7 +516,8 @@ B<Sub::QuoteX::Utils> provides a simplified interface to the process of
 combining L<Sub::Quote> compatible code references with new code.
 
 L<Sub::Quote> provides a number of routines to make code more
-performant by inlining separate chunks of code into a single compiled subroutine.
+performant by inlining syntactically complete chunks of code into a
+single compiled subroutine.
 
 When a chunk of code is compiled into a subroutine by L<<
 C<Sub::Quote::quote_sub()>|Sub::Quote/quote_sub >>, B<Sub::Quote>

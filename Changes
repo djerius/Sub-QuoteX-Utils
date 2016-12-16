@@ -2,5 +2,10 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+  [ENHANCEMENTS]
+
+    * quote_subs can now inline syntactically incomplete code
+      snippets.
+
 0.01      2016-12-16 09:59:32-05:00 America/New_York
     * Initial release
