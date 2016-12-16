@@ -104,7 +104,22 @@ for more information.
 # quote_subs( [], [], {} );
 sub quote_subs {
 
-    my %option = 'HASH' eq ref $_[-1] ? %{ pop @_ } : ();
+    my @caller = caller( 0 );
+
+    # need to duplicate these bits from Sub::Quote::quote_sub, as they rely upon caller
+    my %option = (
+        package      => $caller[0],
+        hints        => $caller[8],
+        warning_bits => $caller[9],
+        hintshash    => $caller[10],
+        'HASH' eq ref $_[-1] ? %{ pop @_ } : (),
+    );
+
+    if ( $option{name} ) {
+        my $subname = $option{name};
+        my $package = $subname =~ s/(.*)::// ? $1 : $option{package};
+        $option{name} = join '::', $package, $subname;
+    }
 
     my %global_capture = %{ delete $option{capture} || {} };
 
