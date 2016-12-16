@@ -2,6 +2,13 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.02      2016-12-16 17:23:01-05:00 America/New_York
+
+  [BUG FIX]
+
+    * quote_subs ensures that Sub::Quote::quote_sub gets the correct
+      compile context and subroutine package.
+
   [ENHANCEMENTS]
 
     * quote_subs can now inline syntactically incomplete code
