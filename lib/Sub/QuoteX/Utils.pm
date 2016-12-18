@@ -5,7 +5,7 @@ package Sub::QuoteX::Utils;
 use strict;
 use warnings;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Sub::Quote
   qw( quoted_from_sub inlinify capture_unroll sanitize_identifier quote_sub );
