@@ -1,5 +1,5 @@
 requires "Scalar::Util" => "0";
-requires "Sub::Quote" => "0";
+requires "Sub::Quote" => "2.002002";
 requires "strict" => "0";
 requires "warnings" => "0";
 
@@ -9,7 +9,7 @@ on 'test' => sub {
   requires "IO::Handle" => "0";
   requires "IPC::Open3" => "0";
   requires "Moo" => "0";
-  requires "Sub::Quote" => "0";
+  requires "Sub::Quote" => "2.002002";
   requires "Test2::Bundle::Extended" => "0";
   requires "Test::More" => "0";
 };

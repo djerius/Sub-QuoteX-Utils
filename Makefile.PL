@@ -17,7 +17,7 @@ my %WriteMakefileArgs = (
   "NAME" => "Sub::QuoteX::Utils",
   "PREREQ_PM" => {
     "Scalar::Util" => 0,
-    "Sub::Quote" => 0,
+    "Sub::Quote" => "2.002002",
     "strict" => 0,
     "warnings" => 0
   },
@@ -27,7 +27,7 @@ my %WriteMakefileArgs = (
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
     "Moo" => 0,
-    "Sub::Quote" => 0,
+    "Sub::Quote" => "2.002002",
     "Test2::Bundle::Extended" => 0,
     "Test::More" => 0
   },
@@ -45,7 +45,7 @@ my %FallbackPrereqs = (
   "IPC::Open3" => 0,
   "Moo" => 0,
   "Scalar::Util" => 0,
-  "Sub::Quote" => 0,
+  "Sub::Quote" => "2.002002",
   "Test2::Bundle::Extended" => 0,
   "Test::More" => 0,
   "strict" => 0,
