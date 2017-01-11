@@ -209,6 +209,9 @@ Specifications may take one of the following forms:
     Specify any required captured values in the `capture` option to
     `quote_subs`.
 
+If the `store` option is passed in a specification, a lexical
+variable with the specified name will automatically be created.
+
 Options which may be passed as the last parameter include all of the
 options accepted by [`Sub::Quote::quote_sub`](https://metacpan.org/pod/Sub::Quote#quote_sub), as well as:
 

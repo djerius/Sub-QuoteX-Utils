@@ -63,4 +63,21 @@ subtest 'code' => sub {
     cmp_inlinify_store( \%gc, $code );
 };
 
+
+subtest 'quote_subs' => sub {
+
+
+    my $object = Class->new;
+    quote_subs(
+        \q[use vars '$expected';],
+        [ $coderef, store => '@coderef' ],
+        [ $object, 'method', store => '@method' ],
+        [ $string, store => '@code' ],
+        \qq[is( \$expected, [@{[ join ',', @$expected ]}], 'fiducial' );],
+        \q[is( \@coderef, $expected, 'coderef' );],
+        \q[is( \@method, $expected, 'method' );],
+        \q[is( \@code, $expected, 'code' );],
+    )->();
+};
+
 done_testing;

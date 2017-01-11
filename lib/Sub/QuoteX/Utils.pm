@@ -79,6 +79,9 @@ C<quote_subs>.
 
 =back
 
+If the C<store> option is passed in a specification, a lexical
+variable with the specified name will automatically be created.
+
 Options which may be passed as the last parameter include all of the
 options accepted by L<< C<Sub::Quote::quote_sub>|Sub::Quote/quote_sub
 >>, as well as:
@@ -126,7 +129,7 @@ sub quote_subs {
 
     my @caller = caller( 0 );
 
-    # need to duplicate these bits from Sub::Quote::quote_sub, as they rely upon caller
+# need to duplicate these bits from Sub::Quote::quote_sub, as they rely upon caller
     my %option = (
         lexicals     => [],
         package      => $caller[0],
@@ -149,32 +152,49 @@ sub quote_subs {
     my @code;
     for my $thing ( @_ ) {
 
-        my $arr = 'ARRAY' eq ref $thing ? $thing : [$thing];
+        my @arr = 'ARRAY' eq ref $thing ? @$thing : ($thing);
 
-        if ( 'CODE' eq ref $arr->[0] ) {
+        # invoke appropriate inlinify subroutine, then remove
+        # non-optional arguemnts from the argument list
+        if ( 'CODE' eq ref $arr[0] ) {
 
-            push @code, inlinify_coderef( \%global_capture, @$arr ), q[;] ;
+            push @code, inlinify_coderef( \%global_capture, @arr ), q[;] ;
         }
 
-        elsif ( blessed $arr->[0] ) {
+        elsif ( blessed $arr[0] ) {
 
-            push @code, inlinify_method( \%global_capture, @$arr ), q[;] ;
+            push @code, inlinify_method( \%global_capture, @arr ), q[;] ;
+
+            # this one gets two non-optional arguments, remove the
+            # first; the second is done below
+            shift @arr;
         }
 
-        elsif ( !ref $arr->[0] ) {
+        elsif ( !ref $arr[0] ) {
 
-            push @code, inlinify_code( \%global_capture, @$arr ), q[;] ;
+            push @code, inlinify_code( \%global_capture, @arr ), q[;] ;
         }
 
-	elsif ( 'SCALAR' eq ref $arr->[0] ) {
+	elsif ( 'SCALAR' eq ref $arr[0] ) {
 
-	    push @code, ${ $arr->[0] };
+	    push @code, ${ $arr[0] };
 
 	}
 	else {
 
 	    croak( "don't understand argument in $_[@{[ scalar @code ]}]\n" );
 	}
+        # remove the remaining non-optional argument
+        shift @arr;
+
+        my %opt = @arr;
+
+        # if we're storing the results in a lexical variable, declare it
+        if ( defined $opt{store} ) {
+            $option{lexicals} = [ $option{lexicals} ]
+              unless 'ARRAY' eq ref $option{lexicals};
+            push @{ $option{lexicals} }, $opt{store};
+        }
     }
 
     $option{lexicals} = [ $option{lexicals} ]
