@@ -12,29 +12,54 @@ use Sub::QuoteX::Utils ':all';
 {
     package Class;
     sub new { bless {}, shift }
-    sub method { 33, 44 }
+    # force list return
+    sub method { @{[ 33, 44 ]} }
 }
 
-my $coderef = sub { 33, 44 };
-my $string = '( 33, 44 );';
+my $coderef = sub { @{[ 33, 44 ]} };
+my $string = ' @{[ 33, 44 ]};';
 
 # non-lexical so generated code can see it
 our $expected = [ 33, 44 ];
 
 sub cmp_inlinify_store {
 
-    my $gc  = shift;
+    my $sub = shift;
+
     my $ctx = context();
 
-    my $got = quote_subs(
-        @_,
-        \'return \@x',
-        {
-            lexicals => '@x',
-            capture  => $gc
-        } )->();
+    my $ok = 1;
 
-    my $ok = is( $got, $expected, "array" );
+    {
+	my %gc;
+
+	my @got = quote_subs(
+			     $sub->( \%gc, @_, store => '@x' ),
+			     \'return @x',
+			     {
+			      lexicals => '@x',
+			      capture => \%gc,
+			     } )->();
+
+	$ok &= is( \@got, $expected, 'array');
+
+    }
+
+
+    {
+	my %gc;
+
+	my $got = quote_subs(
+			     $sub->( \%gc, @_, store => '$x' ),
+			     \'return $x',
+			     {
+			      lexicals => '$x',
+			      capture => \%gc,
+			     } )->();
+	$ok &= is( $got, scalar @$expected, 'scalar' );
+
+    }
+
 
     $ctx->release;
 
@@ -43,29 +68,23 @@ sub cmp_inlinify_store {
 
 subtest 'coderef' => sub {
 
-    my %gc;
-    my $code = inlinify_coderef( \%gc, $coderef, store => '@x' );
-    cmp_inlinify_store( \%gc, $code );
+    cmp_inlinify_store( \&inlinify_coderef, $coderef );
+
 };
 
 subtest 'method' => sub {
 
-    my %gc;
     my $object = Class->new;
-    my $code = inlinify_method( \%gc, $object, 'method', store => '@x' );
-    cmp_inlinify_store( \%gc, $code );
+    cmp_inlinify_store( \&inlinify_method, $object, 'method' );
 };
 
 subtest 'code' => sub {
 
-    my %gc;
-    my $code = inlinify_code( \%gc, $string, store => '@x' );
-    cmp_inlinify_store( \%gc, $code );
+    cmp_inlinify_store( \&inlinify_code, $string );
 };
 
 
 subtest 'quote_subs' => sub {
-
 
     my $object = Class->new;
     quote_subs(
