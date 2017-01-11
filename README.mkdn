@@ -222,6 +222,25 @@ options accepted by [`Sub::Quote::quote_sub`](https://metacpan.org/pod/Sub::Quot
     documentation of the `\%captures` argument to ["quote\_sub" in Sub::Quote](https://metacpan.org/pod/Sub::Quote#quote_sub)
     for more information.
 
+- `lexicals` => _scalar | arrayref _
+
+    One or more lexical variables to declare. If specified, **quote\_subs**
+    will enclose the generated code in a block and will declare these
+    variables at the start of the block.  For example,
+
+        quote_subs( \'@x = 33;',
+                    \'@y = 22;',
+                    lexicals => [ '@x', '@y' ]
+        );
+
+    will result in code equivalent to:
+
+        {
+          my ( @x, @y );
+          @x = 33;
+          @y = 22;
+        }
+
 ## inlinify\_coderef
 
     my $code = inlinify_coderef( \%global_capture, $coderef, %options );

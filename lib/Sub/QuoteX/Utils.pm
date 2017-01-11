@@ -96,6 +96,25 @@ documentation of the C<\%captures> argument to L<Sub::Quote/quote_sub>
 for more information.
 
 
+=item C<lexicals> => I<scalar | arrayref >
+
+One or more lexical variables to declare. If specified, B<quote_subs>
+will enclose the generated code in a block and will declare these
+variables at the start of the block.  For example,
+
+  quote_subs( \'@x = 33;',
+              \'@y = 22;',
+              lexicals => [ '@x', '@y' ]
+  );
+
+will result in code equivalent to:
+
+  {
+    my ( @x, @y );
+    @x = 33;
+    @y = 22;
+  }
+
 
 =back
 
@@ -109,6 +128,7 @@ sub quote_subs {
 
     # need to duplicate these bits from Sub::Quote::quote_sub, as they rely upon caller
     my %option = (
+        lexicals     => [],
         package      => $caller[0],
         hints        => $caller[8],
         warning_bits => $caller[9],
@@ -156,6 +176,20 @@ sub quote_subs {
 	    croak( "don't understand argument in $_[@{[ scalar @code ]}]\n" );
 	}
     }
+
+    $option{lexicals} = [ $option{lexicals} ]
+      unless 'ARRAY' eq ref $option{lexicals};
+    if ( @{ $option{lexicals} } ) {
+
+        # uniqify
+        my %lex;
+        @lex{ @{ $option{lexicals} } } = 1;
+
+        unshift @code, qq/{ my ( @{[ join ', ', keys %lex ]} );/;
+
+        push @code, '}';
+    }
+
 
     quote_sub(
         ( delete $option{name} || () ),
