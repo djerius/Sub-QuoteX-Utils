@@ -229,6 +229,19 @@ rather than
 
   @_ = ...;
 
+=item C<store> => I<variable>
+
+If specified, the result of the generated code will be stored in the variable
+of the given name.  For example
+
+  store => '@x'
+
+would result in code equivalent to:
+
+  @x = &$coderef;
+
+The variable is not declared.
+
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
 This specified the values of C<@_>.
@@ -335,6 +348,19 @@ If true (the default) changes to C<@_> will be local, e.g.
 rather than
 
   @_ = ...;
+
+=item C<store> => I<variable>
+
+If specified, the result of the generated code will be stored in the variable
+of the given name.  For example
+
+  store => '@x'
+
+would result in code equivalent to:
+
+  @x = $object->$method( @_ );
+
+The variable is not declared.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -446,6 +472,19 @@ rather than
 
   @_ = ...;
 
+=item C<store> => I<variable>
+
+If specified, the result of the generated code will be stored in the variable
+of the given name.  For example
+
+  store => '@x'
+
+would result in code equivalent to:
+
+  @x = ... code ...;
+
+The variable is not declared.
+
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
 This specified the values of C<@_>.
@@ -513,8 +552,17 @@ sub inlinify_code {
     $option{local} = 1 unless defined $option{local};
 
 
-    inlinify( $code, $option{args}, capture_unroll( $cap_name, $r_capture, 0 ),
+    my $inlined_code
+      = inlinify( $code, $option{args},
+        capture_unroll( $cap_name, $r_capture, 0 ),
         $option{local} );
+
+    if ( $option{store} ) {
+
+        return join( "\n", qq[$option{store} = do {], $inlined_code, q[};], );
+    }
+
+    return $inlined_code;
 }
 
 1;

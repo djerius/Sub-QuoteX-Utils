@@ -247,6 +247,19 @@ Available options are:
 
         @_ = ...;
 
+- `store` => _variable_
+
+    If specified, the result of the generated code will be stored in the variable
+    of the given name.  For example
+
+        store => '@x'
+
+    would result in code equivalent to:
+
+        @x = &$coderef;
+
+    The variable is not declared.
+
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
     This specified the values of `@_`.
@@ -293,6 +306,19 @@ Available options are:
     rather than
 
         @_ = ...;
+
+- `store` => _variable_
+
+    If specified, the result of the generated code will be stored in the variable
+    of the given name.  For example
+
+        store => '@x'
+
+    would result in code equivalent to:
+
+        @x = $object->$method( @_ );
+
+    The variable is not declared.
 
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
@@ -341,6 +367,19 @@ Available options are:
     rather than
 
         @_ = ...;
+
+- `store` => _variable_
+
+    If specified, the result of the generated code will be stored in the variable
+    of the given name.  For example
+
+        store => '@x'
+
+    would result in code equivalent to:
+
+        @x = ... code ...;
+
+    The variable is not declared.
 
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
