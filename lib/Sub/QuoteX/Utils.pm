@@ -114,6 +114,8 @@ sub quote_subs {
         hintshash    => $caller[10],
         'HASH' eq ref $_[-1] ? %{ pop @_ } : (),
     );
+    my %qsub_opts
+      = map { $_ => $option{$_} } qw[ package hints warning_bits hintshash ];
 
     if ( $option{name} ) {
         my $subname = $option{name};
@@ -157,7 +159,7 @@ sub quote_subs {
     quote_sub(
         ( delete $option{name} || () ),
         join( "\n", @code ),
-        \%global_capture, \%option
+        \%global_capture, \%qsub_opts
     );
 
 }
