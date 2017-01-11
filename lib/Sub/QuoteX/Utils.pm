@@ -15,13 +15,14 @@ use Carp;
 
 use Exporter 'import';
 
-
 our @EXPORT_OK = qw(
   quote_subs
   inlinify_coderef
   inlinify_method
   inlinify_code
 );
+
+our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
 
 =func quote_subs
