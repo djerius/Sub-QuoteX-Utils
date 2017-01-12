@@ -193,7 +193,15 @@ sub quote_subs {
         if ( defined $opt{store} ) {
             $option{lexicals} = [ $option{lexicals} ]
               unless 'ARRAY' eq ref $option{lexicals};
-            push @{ $option{lexicals} }, $opt{store};
+
+            if ( $opt{store} =~ /^[\$@%]/ ) {
+                push @{ $option{lexicals} }, $opt{store};
+            }
+            else {
+                push @{ $option{lexicals} },
+		  '$' . $opt{store},
+                  '@' . $opt{store};
+            }
         }
     }
 
@@ -295,6 +303,11 @@ would result in code equivalent to:
   @x = &$coderef;
 
 The variable is not declared.
+
+If the variable has no sigil, e.g. C<x>, then the calling context is taken
+into account.  In list context, the value is stored in C<@x>, in scalar
+context it is stored in C<$x> and in void context it is not stored at all.
+Neither array or scalar variable is declared.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -415,6 +428,11 @@ would result in code equivalent to:
   @x = $object->$method( @_ );
 
 The variable is not declared.
+
+If the variable has no sigil, e.g. C<x>, then the calling context is taken
+into account.  In list context, the value is stored in C<@x>, in scalar
+context it is stored in C<$x> and in void context it is not stored at all.
+Neither array or scalar variable is declared.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -539,6 +557,12 @@ would result in code equivalent to:
 
 The variable is not declared.
 
+If the variable has no sigil, e.g. C<x>, then the calling context is taken
+into account.  In list context, the value is stored in C<@x>, in scalar
+context it is stored in C<$x> and in void context it is not stored at all.
+Neither array or scalar variable is declared.
+
+
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
 This specified the values of C<@_>.
@@ -611,9 +635,32 @@ sub inlinify_code {
         capture_unroll( $cap_name, $r_capture, 0 ),
         $option{local} );
 
-    if ( $option{store} ) {
+    if ( my $variable = $option{store} ) {
 
-        return join( "\n", qq[$option{store} = do {], $inlined_code, q[};], );
+	my @code;
+
+        if ( $variable =~ /^[\$@%]/ ) {
+
+	    @code = ( qq/$variable = do {/,
+		      $inlined_code,
+		      q/};/ );
+
+        }
+        else {
+	    @code = (
+                 q/if ( defined wantarray() ) { /,
+                 q/    if ( wantarray() ) {/,
+		qq/        \@$variable = do {/, $inlined_code, q/};/,
+		 q/    }/,
+                 q/    else {/,
+                qq/        \$$variable = do {/, $inlined_code, q/};/,
+		 q/    }/,
+		 q/} else { /, $inlined_code, q/ }/,
+		 q/;/
+		 );
+        }
+
+	return join( "\n", '',@code );
     }
 
     return $inlined_code;

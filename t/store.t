@@ -16,8 +16,8 @@ use Sub::QuoteX::Utils ':all';
     sub method { @{[ 33, 44 ]} }
 }
 
-my $coderef = sub { @{[ 33, 44 ]} };
-my $string = ' @{[ 33, 44 ]};';
+my $coderef = sub { my @foo = ( 33, 44 ) };
+my $string = 'my @foo = ( 33, 44 );';
 
 # non-lexical so generated code can see it
 our $expected = [ 33, 44 ];
@@ -25,6 +25,7 @@ our $expected = [ 33, 44 ];
 sub cmp_inlinify_store {
 
     my $sub = shift;
+    my @args = @_;
 
     my $ctx = context();
 
@@ -34,7 +35,7 @@ sub cmp_inlinify_store {
 	my %gc;
 
 	my @got = quote_subs(
-			     $sub->( \%gc, @_, store => '@x' ),
+			     $sub->( \%gc, @args, store => '@x' ),
 			     \'return @x',
 			     {
 			      lexicals => '@x',
@@ -50,7 +51,7 @@ sub cmp_inlinify_store {
 	my %gc;
 
 	my $got = quote_subs(
-			     $sub->( \%gc, @_, store => '$x' ),
+			     $sub->( \%gc, @args, store => '$x' ),
 			     \'return $x',
 			     {
 			      lexicals => '$x',
@@ -59,6 +60,21 @@ sub cmp_inlinify_store {
 	$ok &= is( $got, scalar @$expected, 'scalar' );
 
     }
+
+    subtest 'context aware' => sub {
+
+	my %gc;
+	my $coderef = quote_subs(
+			     $sub->( \%gc, @args, store => 'x' ),
+			     \'wantarray ? @x : defined wantarray ? $x : undef;',
+			     {
+			      lexicals => [ '$x', '@x' ],
+			      capture => \%gc,
+			     } );
+
+	$ok &= is( scalar $coderef->(), scalar @$expected, 'context: scalar' );
+	$ok &= is( [ $coderef->() ], $expected, 'context: array' );
+    };
 
 
     $ctx->release;

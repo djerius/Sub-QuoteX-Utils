@@ -282,6 +282,11 @@ Available options are:
 
     The variable is not declared.
 
+    If the variable has no sigil, e.g. `x`, then the calling context is taken
+    into account.  In list context, the value is stored in `@x`, in scalar
+    context it is stored in `$x` and in void context it is not stored at all.
+    Neither array or scalar variable is declared.
+
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
     This specified the values of `@_`.
@@ -341,6 +346,11 @@ Available options are:
         @x = $object->$method( @_ );
 
     The variable is not declared.
+
+    If the variable has no sigil, e.g. `x`, then the calling context is taken
+    into account.  In list context, the value is stored in `@x`, in scalar
+    context it is stored in `$x` and in void context it is not stored at all.
+    Neither array or scalar variable is declared.
 
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
@@ -402,6 +412,11 @@ Available options are:
         @x = ... code ...;
 
     The variable is not declared.
+
+    If the variable has no sigil, e.g. `x`, then the calling context is taken
+    into account.  In list context, the value is stored in `@x`, in scalar
+    context it is stored in `$x` and in void context it is not stored at all.
+    Neither array or scalar variable is declared.
 
 - `args` => _arrayref_ | _hashref_ | _string_ | `undef`
 
