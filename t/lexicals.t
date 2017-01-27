@@ -13,16 +13,17 @@ use Sub::QuoteX::Utils qw[ quote_subs ];
 subtest 'tests' => sub {
 
     # test that using lexicals that are not declared causes an error
-    # on Perl < 5.22, the use strict in this context isn't propagated
+    # on Perl < 5.10, the use strict in this context isn't propagated
     # into the quoted sub, so explicitly use strict
 
     ok( lives { quote_subs( \q{my $xxxx = 33;} )->() }, "declaration" );
 
-    like(
-        dies {
+    # ignore error message, as that changes between Perl versions.
+    # this code is simple enough
+    ok(
+        ! lives {
             quote_subs( \q{use strict;}, \q{$xxxx = 33;} )->();
         },
-        qr/requires explicit package name/,
         "no declaration"
     ) or bail_out( "can't detect if declaration is required\n" );
 
