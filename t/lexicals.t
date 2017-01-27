@@ -13,14 +13,16 @@ use Sub::QuoteX::Utils qw[ quote_subs ];
 subtest 'tests' => sub {
 
     # test that using lexicals that are not declared causes an error
+    # on Perl < 5.22, the use strict in this context isn't propagated
+    # into the quoted sub, so explicitly use strict
 
-    ok( lives { quote_subs( \'my $xxxx = 33' )->() },
-        "declaration"
-    );
+    ok( lives { quote_subs( \q{my $xxxx = 33;} )->() }, "declaration" );
 
     like(
-        dies { quote_subs( \'$xxxx = 33' )->() },
-        qr/forget to declare/,
+        dies {
+            quote_subs( \q{use strict;}, \q{$xxxx = 33;} )->();
+        },
+        qr/requires explicit package name/,
         "no declaration"
     ) or bail_out( "can't detect if declaration is required\n" );
 
@@ -28,14 +30,23 @@ subtest 'tests' => sub {
 
 subtest 'lexicals' => sub {
 
-    ok( lives {
-	quote_subs( \'$xxxx = 33', { lexicals => '$xxxx' }  )->() },
+    ok(
+        lives {
+            quote_subs( \q{use strict;},
+                        \q{$xxxx = 33;},
+			{ lexicals => '$xxxx' }
+		) ->()
+        },
         "scalar"
     );
 
-    ok( lives {
-	quote_subs( \'$xxxx = 33;', \'$yyyy = 44;',
-		    { lexicals => [ '$xxxx', '$yyyy' ] }  )->() },
+    ok(
+        lives {
+            quote_subs( \q{use strict;},
+			\q{$xxxx = 33;},
+			\q{$yyyy = 44;},
+                { lexicals => [ '$xxxx', '$yyyy' ] } )->()
+        },
         "array"
     );
 

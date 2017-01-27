@@ -2,6 +2,12 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+  [BUILD FIX]
+
+    * t/lexicals.t depended upon "use strict" being propagated into
+      the quoted subs environment.  This seems not to be the case in
+      Perl < 5.22
+
 0.04      2017-01-26 19:26:14-05:00 America/New_York (TRIAL RELEASE)
 
 0.03      2016-12-18 07:16:46-05:00 America/New_York
