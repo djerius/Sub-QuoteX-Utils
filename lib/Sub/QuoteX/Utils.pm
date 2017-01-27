@@ -2,6 +2,8 @@ package Sub::QuoteX::Utils;
 
 # ABSTRACT: Sugar for Sub::Quote
 
+use 5.006;
+
 use strict;
 use warnings;
 
