@@ -7,7 +7,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Sub::Quote
   qw( quoted_from_sub inlinify capture_unroll sanitize_identifier quote_sub );
