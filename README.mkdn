@@ -4,7 +4,7 @@ Sub::QuoteX::Utils - Sugar for Sub::Quote
 
 # VERSION
 
-version 0.04
+version 0.05
 
 # SYNOPSIS
 
