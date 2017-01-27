@@ -81,6 +81,7 @@ C<quote_subs>.
 
 If the C<store> option is passed in a specification, a lexical
 variable with the specified name will automatically be created.
+See L</Storing Chunk Values>.
 
 Options which may be passed as the last parameter include all of the
 options accepted by L<< C<Sub::Quote::quote_sub>|Sub::Quote/quote_sub
@@ -302,12 +303,7 @@ would result in code equivalent to:
 
   @x = &$coderef;
 
-The variable is not declared.
-
-If the variable has no sigil, e.g. C<x>, then the calling context is taken
-into account.  In list context, the value is stored in C<@x>, in scalar
-context it is stored in C<$x> and in void context it is not stored at all.
-Neither array or scalar variable is declared.
+The variable is not declared. See L</Storing Chunk Values>.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -427,12 +423,7 @@ would result in code equivalent to:
 
   @x = $object->$method( @_ );
 
-The variable is not declared.
-
-If the variable has no sigil, e.g. C<x>, then the calling context is taken
-into account.  In list context, the value is stored in C<@x>, in scalar
-context it is stored in C<$x> and in void context it is not stored at all.
-Neither array or scalar variable is declared.
+The variable is not declared. See L</Storing Chunk Values>.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -555,13 +546,7 @@ would result in code equivalent to:
 
   @x = ... code ...;
 
-The variable is not declared.
-
-If the variable has no sigil, e.g. C<x>, then the calling context is taken
-into account.  In list context, the value is stored in C<@x>, in scalar
-context it is stored in C<$x> and in void context it is not stored at all.
-Neither array or scalar variable is declared.
-
+The variable is not declared. See L</Storing Chunk Values>.
 
 =item C<args> => I<arrayref> | I<hashref> | I<string> | C<undef>
 
@@ -694,6 +679,58 @@ and the results compiled into a new subroutine.
 
 B<Sub::QuoteX::Utils> makes that latter process a little easier.
 
+=head2 Usage
+
+Typically, L</quote_subs> is used rather than the lower level
+C<inlinify_*> routines.  C<quote_subs> is passed a list of chunk
+specifications or snippets of code, and generates code which is
+isolated in a Perl block.  Each code chunk is additionally isolated in
+its own block, while code snippets are in the main block.  This
+permits manipulation of the code chunk values.  This is schematically
+equivalent to
+
+  {
+    <snippet>
+    do { <chunk> };
+    <snippet>
+    do { <chunk> };
+    do { <chunk> };
+  }
+
+The values of each chunk may be stored (see L</Storing Chunk Values>)
+and manipulated by the code snippets.
+
+=head2 Storing Chunk Values
+
+A code chunk may have it's value stored in a lexical variable by
+adding the C<store> option to the chunk's options.  For example,
+
+  quote_subs( [ q{ sqrt(2); },    { store => '$x' } ],
+              [ q{ log(2);  },    { store => '$y' } ],
+              [ q{  ( 0..10 ); }, { store => '@z' } ], 
+              \q{print $x + $y, "\n";},
+  );
+
+would result in code equivalent to:
+
+  {
+    my ( $x, $y, @z );
+
+    $x = do { sqrt(2) };
+    $y = do { log(2) };
+    @z = do { ( 0.. 10 ) };
+    print $x + $y, "\n";
+  }
+
+If the variable passed to C<store> has no sigil, e.g. C<x>, then the
+calling context is taken into account.  In list context, the value is
+stored in C<@x>, in scalar context it is stored in C<$x> and in void
+context it is not stored at all.
+
+Automatic declaration of the variables occurs only when
+C<quote_subs> is used to generate the code.
+
+
 =head2 Captures
 
 B<Sub::Quote> keeps track of captured variables in hashes, I<copying>
@@ -721,8 +758,6 @@ example,
   # add more code to $code [...]
 
   $new_coderef = Sub::Quote::quote_sub( $code, \%global_capture );
-
-
 
 
 =head1 SEE ALSO
