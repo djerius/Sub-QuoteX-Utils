@@ -2,6 +2,8 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.04      2017-01-26 19:26:14-05:00 America/New_York (TRIAL RELEASE)
+
 0.03      2016-12-18 07:16:46-05:00 America/New_York
 
   [DISTRIBUTION FIX]
