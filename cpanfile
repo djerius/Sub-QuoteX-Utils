@@ -16,6 +16,7 @@ on 'test' => sub {
   requires "Test2::Bundle::Extended" => "0";
   requires "Test::More" => "0";
   requires "blib" => "1.01";
+  requires "overload" => "0";
 };
 
 on 'test' => sub {

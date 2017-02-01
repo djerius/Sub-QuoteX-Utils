@@ -33,7 +33,8 @@ my %WriteMakefileArgs = (
     "Sub::Quote" => "2.002002",
     "Test2::Bundle::Extended" => 0,
     "Test::More" => 0,
-    "blib" => "1.01"
+    "blib" => "1.01",
+    "overload" => 0
   },
   "VERSION" => "0.07",
   "test" => {
@@ -55,6 +56,7 @@ my %FallbackPrereqs = (
   "Test2::Bundle::Extended" => 0,
   "Test::More" => 0,
   "blib" => "1.01",
+  "overload" => 0,
   "strict" => 0,
   "warnings" => 0
 );
