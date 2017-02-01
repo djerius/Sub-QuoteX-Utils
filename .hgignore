@@ -1,4 +1,6 @@
 \.build
 .gz$
 ^Sub-QuoteX-Utils
+local/
+blib/
 ~$
