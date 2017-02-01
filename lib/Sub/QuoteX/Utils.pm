@@ -500,7 +500,7 @@ sub inlinify_method {
 			 '${$r_object}->',
 			 $method,
 			 $option{provide_args} ? '( @_ )' : '()',
-			 'if ${$r_object};',
+			 'if defined ${$r_object};',
 		       ),
 
 		   capture => \%capture, %option );

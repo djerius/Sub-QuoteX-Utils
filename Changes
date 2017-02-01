@@ -2,6 +2,11 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+  [BUG FIX]
+
+    * classes which overloaded the bool operator were not handled
+      correctly.
+
 0.06      2017-01-12 10:08:20-05:00 America/New_York (TRIAL RELEASE)
 
   [BUILD FIX]
